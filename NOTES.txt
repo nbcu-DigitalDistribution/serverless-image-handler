@@ -1,0 +1,35 @@
+metadata-images.staging.nbcuniversaltech.com
+metadata-images.staging.nbcuniversaltech.com
+
+Source code bucket needs to have region appended to name
+ex. Metadata-images-source-us-east-1
+
+Needs to be built on Amazon Linux image
+
+Need to copy the resulting dist directory back into the host machine then run upload script
+
+How to build Lambda function locally through docker image:
+https://github.com/awslabs/serverless-image-handler/issues/25#issuecomment-377528532
+
+Need to copy resulting dist directory back to the host machine via docker cp
+
+Need to update in template in dist/ before upload to allow uploading of images through CloudFront:
+
+ImageHandlerDistribution:
+    Type: 'AWS::CloudFront::Distribution'
+    Properties:
+      DistributionConfig:
+        …
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+             - PUT
+             - POST
+             - PATCH
+             - OPTIONS
+             - DELETE
+
+Thumbor does not save images by default when using S3
+For named images, need to enable uploading. Can name image via ‘Slug’ header
+	Hashed url path is returned in response header, ‘Location’ (can prepend CloudFront host to get this image)
