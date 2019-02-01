@@ -397,7 +397,7 @@ Resources:
           UUID: !GetAtt
             - CreateUniqueID
             - UUID
-          LOG_LEVEL: INFO
+          LOG_LEVEL: DEBUG
           ALLOW_UNSAFE_URL: True
   ImageHandlerLogGroup:
     DeletionPolicy: Retain
@@ -515,6 +515,11 @@ Resources:
           AllowedMethods:
             - GET
             - HEAD
+            - POST
+            - PUT
+            - PATCH
+            - OPTIONS
+            - DELETE
           TargetOriginId: !If
           - AutoDeployUI
           - !Sub S3-${DemoWebsiteBucket}
@@ -651,7 +656,7 @@ Resources:
         - Description
       Environment:
         Variables:
-          LOG_LEVEL: INFO
+          LOG_LEVEL: DEBUG
   CreateUniqueID:
     Type: 'Custom::LoadLambda'
     DependsOn: CustomResourceLoggingPolicy

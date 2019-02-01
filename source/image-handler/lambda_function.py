@@ -78,7 +78,7 @@ def response_formater(status_code='400',
     # Adding missing header to response
     # https://github.com/awslabs/serverless-image-handler/pull/34
     # https://github.com/awslabs/serverless-image-handler/pull/60
-    if int(status_code) != 200:
+    if int(status_code) >= 200 and int(status_code) < 300:
         api_response['body'] = json.dumps(body)
         api_response['headers']['Cache-Control'] = cache_control
         api_response['isBase64Encoded'] = 'false'
@@ -119,11 +119,11 @@ def signed_url(secret_key, string_to_sign):
     return base64.b64encode(hashed.digest())
 
 
-def true_url(http_path):
+def true_url(http_path, http_method):
     """
     Generate URL based on /unsafe or security key
     """
-    if bool(strtobool(str(config.ALLOW_UNSAFE_URL))):
+    if bool(strtobool(str(config.ALLOW_UNSAFE_URL))) and http_method == 'GET':
         http_path = '/unsafe' + http_path
     return http_path
 
@@ -270,14 +270,20 @@ def request_thumbor(original_request, session):
     logging.debug('original_request: %s' % (json.dumps(original_request)))
     http_path = original_request['path']
     logging.debug('original_request path: %s' % (http_path))
+    http_method = original_request['requestContext']['httpMethod']
+    logging.debug('original_request method: %s' % (http_method))
     try:
         http_path = rewrite(http_path);
         logging.debug('http path after rewrite: %s' % (http_path))
-        http_path = true_url(http_path)
+        http_path = true_url(http_path, http_method)
     except Exception as error:
         logging.error('invalid http path: %s' % (error))
     request_headers = {}
     vary, request_headers = auto_webp(original_request, request_headers)
+
+    if original_request['requestContext']['httpMethod'] == 'POST':
+        image_data = base64.b64decode(original_request['body'])
+        return session.post(unix_path + http_path, headers=request_headers, data=image_data), vary
     return session.get(unix_path + http_path, headers=request_headers), vary
 
 def process_thumbor_responde(thumbor_response, vary):
@@ -333,7 +339,9 @@ def lambda_handler(event, context):
         logging.getLogger().setLevel(log_level)
 
         if event['requestContext']['httpMethod'] != 'GET' and\
-           event['requestContext']['httpMethod'] != 'HEAD':
+           event['requestContext']['httpMethod'] != 'HEAD' and\
+           event['requestContext']['httpMethod'] != 'POST' and\
+           event['requestContext']['httpMethod'] != 'PUT':
             return response_formater(status_code=405)
         result = call_thumbor(event)
         if str(os.environ.get('SEND_ANONYMOUS_DATA')).upper() == 'YES':
