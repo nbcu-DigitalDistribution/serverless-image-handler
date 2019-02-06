@@ -1,7 +1,7 @@
 #!/bin/bash
 
-TEMPLATE_OUTPUT_BUCKET=metadata-images-source
-DIST_OUTPUT_BUCKET=metadata-images-source
-VERSION=0.0.8
+SOURCE_CODE_OUTPUT_BUCKET=metadata-images-source
+VERSION=$1
 
-./build-s3-dist.sh $DIST_OUTPUT_BUCKET $VERSION
+rm -rf ./deployment/dist
+./build-s3-dist.sh $SOURCE_CODE_OUTPUT_BUCKET $VERSION

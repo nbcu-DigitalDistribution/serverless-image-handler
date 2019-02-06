@@ -61,7 +61,8 @@ def response_formater(status_code='400',
                       expires='',
                       etag='',
                       date='',
-                      vary=False
+                      vary=False,
+                      location=None
                       ):
 
     api_response = {
@@ -81,6 +82,7 @@ def response_formater(status_code='400',
     if int(status_code) >= 200 and int(status_code) < 300:
         api_response['body'] = json.dumps(body)
         api_response['headers']['Cache-Control'] = cache_control
+        if location is not None: api_response['headers']['Location'] = location
         api_response['isBase64Encoded'] = 'false'
     else:
         api_response['body'] = body
@@ -286,8 +288,8 @@ def request_thumbor(original_request, session):
         return session.post(unix_path + http_path, headers=request_headers, data=image_data), vary
     return session.get(unix_path + http_path, headers=request_headers), vary
 
-def process_thumbor_responde(thumbor_response, vary):
-     if thumbor_response.status_code != 200:
+def process_thumbor_response(thumbor_response, original_request_method, vary):
+     if thumbor_response.status_code > 299:
          return response_formater(status_code=thumbor_response.status_code)
      if vary:
          vary = thumbor_response.headers['vary']
@@ -305,22 +307,33 @@ def process_thumbor_responde(thumbor_response, vary):
      if body is None:
          return response_formater(status_code='500',
                                   cache_control='no-cache,no-store')
-     return response_formater(status_code='200',
-                              body=body,
-                              cache_control=thumbor_response.headers['Cache-Control'],
-                              content_type=content_type,
-                              expires=thumbor_response.headers['Expires'],
-                              etag=thumbor_response.headers['Etag'],
-                              date=thumbor_response.headers['Date'],
-                              vary=vary
-                              )
+     if original_request_method == 'GET':
+         logger.debug('Returning GET request response')
+         return response_formater(status_code=thumbor_response.status_code,
+                                  body=body,
+                                  cache_control=thumbor_response.headers['Cache-Control'],
+                                  content_type=content_type,
+                                  expires=thumbor_response.headers['Expires'],
+                                  etag=thumbor_response.headers['Etag'],
+                                  date=thumbor_response.headers['Date'],
+                                  vary=vary
+                                  )
+     else: # POST requests
+         logger.debug('Returning POST request response')
+         return response_formater(status_code=thumbor_response.status_code,
+                                  body=body,
+                                  content_type=content_type,
+                                  vary=vary,
+                                  location=thumbor_response.headers['Location']
+                                  )
 
 def call_thumbor(original_request):
     thumbor_down, session = is_thumbor_down()
     if thumbor_down:
         return thumbor_down
+    original_request_method = original_request['requestContext']['httpMethod']
     thumbor_response, vary = request_thumbor(original_request, session)
-    return process_thumbor_responde(thumbor_response, vary)
+    return process_thumbor_response(thumbor_response, original_request_method, vary)
 
 def lambda_handler(event, context):
     """

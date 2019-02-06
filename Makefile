@@ -3,9 +3,10 @@ clean_containers:
 
 build_package: clean_containers
 	docker build -t thumbor-lambda .
-	docker exec $(shell docker run -itd --name=thumbor thumbor-lambda bash) /thumbor/deployment/build.sh
+	docker exec $(shell docker run -itd --name=thumbor thumbor-lambda bash) /thumbor/deployment/build.sh $(VERSION)
 
 upload_package: build_package
-	./deployment/upload.sh
+	./deployment/copy-package.sh
+	./deployment/upload.sh $(VERSION)
 
 .PHONY: build_package upload_package
