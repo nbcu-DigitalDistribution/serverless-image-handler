@@ -308,7 +308,7 @@ def process_thumbor_response(thumbor_response, original_request_method, vary):
          return response_formater(status_code='500',
                                   cache_control='no-cache,no-store')
      if original_request_method == 'GET':
-         logger.debug('Returning GET request response')
+         logging.debug('Returning GET request response')
          return response_formater(status_code=thumbor_response.status_code,
                                   body=body,
                                   cache_control=thumbor_response.headers['Cache-Control'],
@@ -319,7 +319,7 @@ def process_thumbor_response(thumbor_response, original_request_method, vary):
                                   vary=vary
                                   )
      else: # POST requests
-         logger.debug('Returning POST request response')
+         logging.debug('Returning POST request response')
          return response_formater(status_code=thumbor_response.status_code,
                                   body=body,
                                   content_type=content_type,

@@ -32,14 +32,15 @@ echo "cp -f serverless-image-handler.template dist"
 cp -f serverless-image-handler.template dist
 echo "Updating code source bucket in template with $1"
 replace="s/%%BUCKET_NAME%%/$1/g"
-echo "sed -i '' -e $replace dist/serverless-image-handler.template"
-sed -i '' -e $replace dist/serverless-image-handler.template
+echo "sed -i dist/serverless-image-handler.template -e $replace"
+sed -i dist/serverless-image-handler.template -e $replace
 
 # SO-SIH-154 - 07/16/2018 - Build fixes
 # Adding variable for artifact version
+echo "Updating code source version in template with $2"
 replace="s/%%VERSION%%/$2/g"
-echo "sed -i '' -e $replace dist/serverless-image-handler.template"
-sed -i '' -e $replace dist/serverless-image-handler.template
+echo "sed -i dist/serverless-image-handler.template -e $replace"
+sed -i dist/serverless-image-handler.template -e $replace
 
 echo "Creating UI ZIP file"
 cd $deployment_dir/../source/ui
