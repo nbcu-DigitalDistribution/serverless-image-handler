@@ -140,13 +140,13 @@ cd $VIRTUAL_ENV
 pwd
 echo 'yum install nasm autoconf automake libtool -y'
 yum install nasm autoconf automake libtool -y
-echo 'wget https://github.com/mozilla/mozjpeg/releases/download/v3.2/mozjpeg-3.2-release-source.tar.gz'
-wget https://github.com/mozilla/mozjpeg/releases/download/v3.2/mozjpeg-3.2-release-source.tar.gz
-tar -zxvf mozjpeg-3.2-release-source.tar.gz
-cd mozjpeg
+echo 'wget https://github.com/mozilla/mozjpeg/archive/v3.3.1.tar.gz'
+wget https://github.com/mozilla/mozjpeg/archive/v3.3.1.tar.gz
+tar -zxvf v3.3.1.tar.gz
+cd mozjpeg-3.3.1
 autoreconf -fiv
 mkdir build && cd build
-sh ../configure --disable-shared --enable-static
+sh ../configure --enable-static
 make install prefix=/var/task libdir=/var/task
 cp -f /var/task/libjpeg.so* $VIRTUAL_ENV/bin/lib
 # SO-SIH-170 - 08/15/2018 - mozjpeg path

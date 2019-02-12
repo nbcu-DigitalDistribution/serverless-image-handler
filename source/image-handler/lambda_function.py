@@ -284,9 +284,21 @@ def request_thumbor(original_request, session):
     vary, request_headers = auto_webp(original_request, request_headers)
 
     if original_request['requestContext']['httpMethod'] == 'POST':
+        # post_headers = original_request.headers
+        # request_headers = merge_two_dicts(request_headers, post_headers)
         image_data = base64.b64decode(original_request['body'])
+        logging.debug('POST image data:')
+        logging.debug(repr(image_data))
+        # logging.debug('POST headers')
+        # logging.debug(request_headers)
+        request_headers = merge_two_dicts(request_headers, {'Slug': original_request['headers']['slug']})
         return session.post(unix_path + http_path, headers=request_headers, data=image_data), vary
     return session.get(unix_path + http_path, headers=request_headers), vary
+
+def merge_two_dicts(x, y):
+    z = x.copy()
+    z.update(y)
+    return z
 
 def process_thumbor_response(thumbor_response, original_request_method, vary):
      if thumbor_response.status_code > 299:

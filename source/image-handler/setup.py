@@ -28,7 +28,7 @@ setup(
             '': ['*.conf'],
     },
     install_requires=[
-        'botocore==1.12.89',
+        'botocore',
         # SO-SIH-159 - 07/18/2018 - Version and dependencies fix
         # Locking botocore, pycurl version and moving dependencies from requirements
         'tornado==5.1.1',
@@ -36,12 +36,12 @@ setup(
         'tornado_botocore==1.5.0',
         'requests_unixsocket==0.1.5',
         'thumbor==6.7.0',
-        'thumbor-plugins==0.2.0',
+        'thumbor-plugins==0.2.1',
         # SO-SIH-155 - 07/18/2018 - Rekognition integration
         # Adding Rekognition
         'thumbor_rekognition==0.1.1',
         'tc_aws==6.2.12',
-        'opencv-python==3.2.0.6'
+        'opencv-python==3.2.0.8'
     ],
     extras_require={
             'tests': tests_require,
