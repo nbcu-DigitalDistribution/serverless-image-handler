@@ -4,61 +4,45 @@ Published version, additional details and documentation are available here: http
 
 _Note:_ it is recommend to build the application binary on Amazon Linux.
 
-## Running unit tests for customization
-* Clone the repository, then make the desired code changes
-* Next, run unit tests to make sure added customization passes the tests
-```
-cd ./deployment
-chmod +x ./run-unit-tests.sh  \n
-./run-unit-tests.sh \n
+## Creating the Docker Container
+
+Everything in this repository has been dockerized to mimic the deployment environment necessary in AWS. We use AWS Lambda to host the image processing instance which the Dockerfile reflects.
+
+Run this command to build that image locally
+
+```bash
+make build_docker_container
 ```
 
-## Building distributable for customization
-* Configure the bucket name of your target Amazon S3 distribution bucket
-```
-export TEMPLATE_OUTPUT_BUCKET=my-bucket-name # bucket where cfn template will reside
-export DIST_OUTPUT_BUCKET=my-bucket-name # bucket where customized code will reside
-export VERSION=my-version # version number for the customized code
-```
-_Note:_ You would have to create 2 buckets, one named 'my-bucket-name' and another regional bucket named 'my-bucket-name-<aws_region>'; aws_region is where you are testing the customized solution. Also, the assets  in bucket should be publicly accessible.
+## Building Distributable
 
-* OS/Python Environment Setup
+The image that gets deployed gets built within the Docker container as to decrease platform incompatibilities with dependencies necessary to build and run the application once deployed to Lambda. To do so, run the following command:
+
 ```bash
-yum install yum-utils epel-release -y
-sudo yum-config-manager --enable epel
-sudo yum update -y
-sudo yum install zip wget git libpng-devel libcurl-devel gcc python-devel libjpeg-devel -y
-alias sudo='sudo env PATH=$PATH'
-sudo pip install setuptools==39.0.1
-sudo pip install virtualenv==15.2.0
-```
-* Clone the github repo
-```bash
-git clone https://github.com/awslabs/serverless-image-handler.git
+make build_package VERSION=<your_version_number>
 ```
 
-* Navigate to the deployment folder
+## Uploading the Distributable
+
+Right now, we deploy the stack manually by pointing to a CloudFormation template stored in S3. That template also tells Lambda to point to a package uploaded to S3 as well. The following command will upload the built distributable along with a CloudFormation template to a S3 bucket designated in the `deployment/upload.sh` script.
+
 ```bash
-cd serverless-image-handler/deployment
+make upload_package VERSION=<your_version_number>
 ```
 
-* Now build the distributable
+## Running unit tests
+
+Run the command
+
 ```bash
-sudo ./build-s3-dist.sh $DIST_OUTPUT_BUCKET $VERSION
+make unit_test
 ```
 
-* Deploy the distributable to an Amazon S3 bucket in your account. Note: you must have the AWS Command Line Interface installed.
-```bash
-aws s3 cp ./dist/ s3://$DIST_OUTPUT_BUCKET-[region_name]/serverless-image-handler/$VERSION/ --recursive --exclude "*" --include "*.zip"
-aws s3 cp ./dist/serverless-image-handler.template s3://$TEMPLATE_OUTPUT_BUCKET/serverless-image-handler/$VERSION/
-```
-_Note:_ In the above example, the solution template will expect the source code to be located in the my-bucket-name-[region_name] with prefix serverless-image-handler/my-version/serverless-image-handler.zip
+## Caveats
 
-* Get the link of the serverless-image-handler.template uploaded to your Amazon S3 bucket.
-* Deploy the Serverless Image Handler solution to your account by launching a new AWS CloudFormation stack using the link of the serverless-image-handler.template
-```bash
-https://s3.amazonaws.com/my-bucket-name/serverless-image-handler/my-version/serverless-image-handler.template
-```
+* You may notice that the bucket names in the `deployment/build.sh` and `deployment/upload.sh` scripts are different. The `build.sh` script has the bucket name as you would expect and the `upload.sh` script has the bucket name with the region it's created in appended to it. The region name is needed because Lambda expects it, but the template generation only requires the root name of the bucket and will then append the region to it for Lambda to point at.
+
+* Right now, uploading isn't completely working due to an async issue with the Tornado-Botocore dependency. Still investigating what the options are. May have to create a service around Thumbbor and use it as a CLI tool rather than a service.
 
 ## SafeURL hash calculation
 * For hash calculation with safe URL, use following snippet to find signed_path value
